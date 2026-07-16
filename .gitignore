@@ -1,0 +1,14 @@
+# Local OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Never commit PocketBase data (it lives on Fly volume)
+pb_data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Env files
+.env
+.env.*

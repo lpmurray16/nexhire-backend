@@ -11,6 +11,7 @@ RUN apk add --no-cache curl unzip ca-certificates && \
   rm /tmp/pb.zip
 
 WORKDIR /pb
+COPY pb_hooks /pb/pb_hooks
 EXPOSE 8080
 
 CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8080", "--dir=/pb/pb_data"]

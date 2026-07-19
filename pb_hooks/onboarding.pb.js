@@ -1,25 +1,3 @@
-function requireOrganizationRole(user, roles) {
-  const organization = user.getString("organization")
-  const role = user.getString("role")
-
-  if (!organization || roles.indexOf(role) === -1) {
-    throw new ForbiddenError("You do not have permission to manage invitations.")
-  }
-
-  return organization
-}
-
-function publicInvite(invite) {
-  return {
-    id: invite.id,
-    role: invite.getString("role"),
-    expiresAt: invite.getString("expiresAt"),
-    usedAt: invite.getString("usedAt"),
-    revoked: invite.getBool("revoked"),
-    created: invite.getString("created"),
-  }
-}
-
 routerAdd("POST", "/api/nexhire/organizations", (e) => {
   const name = String(e.requestInfo().body.name || "").trim()
 
@@ -53,7 +31,8 @@ routerAdd("POST", "/api/nexhire/organizations", (e) => {
 }, $apis.requireAuth("users"))
 
 routerAdd("GET", "/api/nexhire/invites", (e) => {
-  const organization = requireOrganizationRole(e.auth, ["owner", "admin"])
+  const helpers = require(`${__hooks}/lib/onboarding.js`)
+  const organization = helpers.requireOrganizationRole(e.auth, ["owner", "admin"])
   const records = e.app.findRecordsByFilter(
     "organization_invites",
     "organization = {:organization}",
@@ -64,12 +43,13 @@ routerAdd("GET", "/api/nexhire/invites", (e) => {
   )
 
   return e.json(200, {
-    items: records.map(publicInvite),
+    items: records.map((record) => helpers.publicInvite(record)),
   })
 }, $apis.requireAuth("users"))
 
 routerAdd("POST", "/api/nexhire/invites", (e) => {
-  const organization = requireOrganizationRole(e.auth, ["owner", "admin"])
+  const helpers = require(`${__hooks}/lib/onboarding.js`)
+  const organization = helpers.requireOrganizationRole(e.auth, ["owner", "admin"])
   const body = e.requestInfo().body
   const role = String(body.role || "recruiter")
   const expiresInDays = Number(body.expiresInDays || 7)
@@ -92,13 +72,14 @@ routerAdd("POST", "/api/nexhire/invites", (e) => {
   e.app.save(invite)
 
   return e.json(201, {
-    invite: publicInvite(invite),
+    invite: helpers.publicInvite(invite),
     token: token,
   })
 }, $apis.requireAuth("users"))
 
 routerAdd("DELETE", "/api/nexhire/invites/{id}", (e) => {
-  const organization = requireOrganizationRole(e.auth, ["owner", "admin"])
+  const helpers = require(`${__hooks}/lib/onboarding.js`)
+  const organization = helpers.requireOrganizationRole(e.auth, ["owner", "admin"])
   const invite = e.app.findRecordById("organization_invites", e.request.pathValue("id"))
 
   if (invite.getString("organization") !== organization) {
